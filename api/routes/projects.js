@@ -38,7 +38,11 @@ router.post('/upload', (req, res) => {
 });
 
 router.get('/all', (req, res) => {
-    mysqlConnection.query(`select pg.*,asi.idAsignacion from ${name_table} pg LEFT JOIN asignaciones asi ON pg.idProyecto = asi.idProyecto`, (err, rows, fields) => {
+    mysqlConnection.query(`SELECT pg.*,asi.idAsignacion,c.nombre nombre_categoria,ea.nombreEstado nombre_estado FROM ${name_table} pg 
+                            LEFT JOIN asignaciones asi ON pg.idProyecto = asi.idProyecto
+                            LEFT JOIN estadosasignacion ea ON ea.idEstado = pg.estado
+                            LEFT JOIN categorias c ON c.idCategoria = pg.idCategoria
+                            `, (err, rows, fields) => {
         if (!err) {
             res.json(rows);
         } else {

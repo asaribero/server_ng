@@ -8,7 +8,7 @@ const ID_ROL_DOCENTE = 3;
 const name_table = 'usuarios';
 
 router.get('/',(req,res)=>{
-    mysqlConnection.query(`select * from ${name_table}`, (err,rows,fields) => {
+    mysqlConnection.query(`select * from ${name_table} u JOIN roles r ON u.rol = r.rol`, (err,rows,fields) => {
         if(!err){
             res.json(rows);
         }else{
@@ -16,6 +16,89 @@ router.get('/',(req,res)=>{
         }
     })
 });
+
+router.get('/roles',(req,res)=>{
+    mysqlConnection.query(`select * from roles`, (err,rows,fields) => {
+        if(!err){
+            res.json(rows);
+        }else{
+            console.log(err)
+        }
+    })
+});
+
+router.get('/userByParams/:id', (req, res) => {
+    const { id } = req.params;
+    mysqlConnection.query(`SELECT * FROM ${name_table} u JOIN roles r ON u.rol = r.rol WHERE idUsuario = ${id}`, (err, rows, fields) => {
+        if (!err) {
+            if (rows.length > 0) {
+                // Estructura para cumplir con UserResponse
+                res.json({
+                    data: rows[0], // Envía el primer resultado en la clave "data"
+                    support: {
+                        url: "http://support.example.com", // Información adicional de soporte
+                        text: "Para más información, visita nuestro soporte."
+                    }
+                });
+            } else {
+                res.status(404).json({ error: 'Usuario no encontrado' });
+            }
+        } else {
+            console.log(err);
+            res.status(500).json({ error: 'Error en el servidor' });
+        }
+    });
+});
+
+// Ruta para crear un nuevo usuario
+router.post('/create', (req, res) => {
+    const { nombre, email, rol, contrasena } = req.body;
+
+    // Validar la entrada del usuario
+    if (!validateUserInput(nombre, email, rol, contrasena)) {
+        return res.status(400).json({ status: 'Todos los campos son requeridos', id_status: 0 });
+    }
+
+    const insertQuery = `INSERT INTO usuarios (nombre, email, rol, contrasena) VALUES (?, ?, ?, ?)`;
+    const queryParams = [nombre, email, rol, contrasena];
+
+    mysqlConnection.query(insertQuery, queryParams, (err, result) => {
+        if (!err) {
+            res.json({ status: 'Usuario creado', id_status: 1 });
+        } else {
+            console.log(err);
+            res.status(500).json({ status: 'Error al crear el usuario', id_status: 0 });
+        }
+    });
+});
+
+// Ruta para actualizar un usuario existente
+router.put('/update/:id', (req, res) => {
+    const { id } = req.params;
+    const { nombre, email, rol, contrasena } = req.body;
+
+    // Validar la entrada del usuario
+    if (!validateUserInput(nombre, email, rol, contrasena)) {
+        return res.status(400).json({ status: 'Todos los campos son requeridos', id_status: 0 });
+    }
+
+    const updateQuery = `UPDATE usuarios SET nombre = ?, email = ?, rol = ?, contrasena = ? WHERE idUsuario = ?`;
+    const queryParams = [nombre, email, rol, contrasena, id];
+
+    mysqlConnection.query(updateQuery, queryParams, (err, result) => {
+        if (!err) {
+            if (result.affectedRows > 0) {
+                res.json({ status: 'Usuario actualizado', id_status: 1 });
+            } else {
+                res.status(404).json({ status: 'Usuario no encontrado', id_status: 0 });
+            }
+        } else {
+            console.log(err);
+            res.status(500).json({ status: 'Error al actualizar el usuario', id_status: 0 });
+        }
+    });
+});
+
 
 // Ruta para iniciar sesión
 router.post('/signin', (req, res) => {
