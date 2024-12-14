@@ -122,7 +122,7 @@ router.post('/signin', (req, res) => {
             }
         } else {
             console.log(err);
-            res.status(500).json({ status: 'Error en el servidor', id_status: 0 });
+            res.status(500).json({ status: 'Error en el servidor', nombre: nombre,contrasena:contrasena });
         }
     });
 });
