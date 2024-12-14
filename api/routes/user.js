@@ -116,13 +116,13 @@ router.post('/signin', (req, res) => {
             if (rows.length > 0) {
                 let data = JSON.stringify(rows[0]);
                 const token = jwt.sign(data, 'stil');
-                res.json({ status: 'Usuario y contraseña Correctos' , token:token });
+                res.json({ status: 'Usuario y contraseña Correctos', token: token });
             } else {
-                res.json('Usuario y contraseña incorrectos');
+                res.status(401).json({ status: 'Usuario y contraseña incorrectos' });
             }
         } else {
-            console.log(err);
-            res.status(500).json({ status: 'Error en el servidor', nombre: nombre,contrasena:contrasena });
+            console.error('Error en la consulta:', err); // Log del error
+            res.status(500).json({ status: 'Error en el servidor', error: err.message, nombre: nombre,contrasena:contrasena });
         }
     });
 });
