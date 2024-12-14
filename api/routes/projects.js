@@ -84,7 +84,7 @@ router.post('/getProject', (req, res) => {
 
 router.post('/saveAssing', (req, res) => {
     const { idUsuario, idProyecto, rol } = req.body;
-    const insertQuery = `INSERT INTO asignaciosnes (idUsuario, idProyecto, rol) VALUES (?, ?, ?)`;
+    const insertQuery = `INSERT INTO asignaciones (idUsuario, idProyecto, rol) VALUES (?, ?, ?)`;
     mysqlConnection.query(insertQuery, [idUsuario, idProyecto, rol], (err, rows, fields) => {
         if (!err) {
             res.json({ status: 'Guardado correctamente ...', id_status: 1 });
