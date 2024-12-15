@@ -64,22 +64,79 @@ router.post('/save', (req, res) => {
     })
 });
 
-router.post('/getProject', (req, res) => {
-    const { idProyecto } = req.body;
-    const insertQuery = `select * from ${name_table} where idProyecto=?`;
-    mysqlConnection.query(insertQuery,
-        [idProyecto],
-        (err, rows, fields) => {
-            if (!err) {
-                if (rows.length > 0) {
-                    res.json(rows[0]);
-                } else {
-                    res.json('No se encontro el proyecto');
-                }
+// Ruta para actualizar un proyecto existente
+router.put('/update/:idProyecto', (req, res) => {
+    const { idProyecto } = req.params; // Capturar el ID del proyecto desde la URL
+    const { titulo, resumen, estado, fechaInicio, fechaFin, idCategoria } = req.body;
+
+    // Validar la entrada del proyecto
+    if (!titulo || !resumen || !fechaInicio || !fechaFin || !idCategoria) {
+        return res.status(400).json({ status: 'Todos los campos son requeridos', id_status: 0 });
+    }
+
+    const updateQuery = `
+        UPDATE ${name_table} 
+        SET titulo = ?, resumen = ?, fechaInicio = ?, fechaFin = ?, idCategoria = ? 
+        WHERE idProyecto = ?
+    `;
+    const queryParams = [titulo, resumen, fechaInicio, fechaFin, idCategoria, idProyecto];
+
+    // Ejecutar la consulta SQL
+    mysqlConnection.query(updateQuery, queryParams, (err, result) => {
+        if (!err) {
+            if (result.affectedRows > 0) {
+                res.json({ status: 'Proyecto actualizado correctamente', id_status: 1 });
             } else {
-                console.log(err)
+                res.status(404).json({ status: 'Proyecto no encontrado', id_status: 0 });
             }
-        })
+        } else {
+            console.error(err);
+            res.status(500).json({ status: 'Error al actualizar el proyecto', id_status: 0 });
+        }
+    });
+});
+
+router.delete('/delete/:idProyecto', (req, res) => {
+    const { idProyecto } = req.params;
+
+    const deleteQuery = `DELETE FROM ${name_table} WHERE idProyecto = ?`;
+
+    mysqlConnection.query(deleteQuery, [idProyecto], (err, result) => {
+        if (!err) {
+            if (result.affectedRows > 0) {
+                res.json({ status: 'Proyecto eliminado correctamente', id_status: 1 });
+            } else {
+                res.status(404).json({ status: 'Proyecto no encontrado', id_status: 0 });
+            }
+        } else {
+            console.error(err);
+            res.status(500).json({ status: 'Error al eliminar el proyecto', id_status: 0 });
+        }
+    });
+});
+
+router.get('/getProject/:idProyecto', (req, res) => {
+    const { idProyecto } = req.params;
+    const insertQuery = `select * from ${name_table} where idProyecto=${idProyecto}`;
+    mysqlConnection.query(insertQuery, (err, rows, fields) => {
+        if (!err) {
+            if (rows.length > 0) {
+                // Estructura para cumplir con UserResponse
+                res.json({
+                    data: rows[0], // Envía el primer resultado en la clave "data"
+                    support: {
+                        url: "http://support.example.com", // Información adicional de soporte
+                        text: "Para más información, visita nuestro soporte."
+                    }
+                });
+            } else {
+                res.status(404).json({ error: 'Proyecto no encontrado' });
+            }
+        } else {
+            console.log(err);
+            res.status(500).json({ error: 'Error en el servidor' });
+        }
+    });
 });
 
 router.post('/saveAssing', (req, res) => {
@@ -180,6 +237,35 @@ router.post('/saveComentarioDocumento', (req, res) => {
             res.status(500).json({ status: 'Error al guardar', id_status: 0 });
         }
     })
+});
+
+router.get('/download/:fileName', (req, res) => {
+    const { fileName } = req.params; // Captura el nombre del archivo desde la URL
+    const uploadPath = path.join(__dirname, '/uploads/', fileName); // Ruta completa del archivo
+
+    // Verifica si el archivo existe
+    if (fs.existsSync(uploadPath)) {
+        res.download(uploadPath, fileName, (err) => {
+            if (err) {
+                console.error('Error al descargar el archivo:', err);
+                res.status(500).json({ status: 'Error al descargar el archivo', id_status: 0 });
+            }
+        });
+    } else {
+        res.status(404).json({ status: 'Archivo no encontrado', id_status: 0 });
+    }
+});
+
+router.get('/preview/:fileName', (req, res) => {
+    const { fileName } = req.params; // Captura el nombre del archivo desde la URL
+    const filePath = path.join(__dirname, '/uploads/', fileName); // Ruta completa al archivo
+
+    // Verifica si el archivo existe
+    if (fs.existsSync(filePath)) {
+        res.sendFile(filePath); // Envía el archivo al navegador
+    } else {
+        res.status(404).json({ status: 'Archivo no encontrado', id_status: 0 });
+    }
 });
 
 module.exports = router;

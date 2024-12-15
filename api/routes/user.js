@@ -99,6 +99,26 @@ router.put('/update/:id', (req, res) => {
     });
 });
 
+router.delete('/delete/:idUsuario', (req, res) => {
+    const { idUsuario } = req.params;
+
+    const deleteQuery = `DELETE FROM usuarios WHERE idUsuario = ?`;
+
+    mysqlConnection.query(deleteQuery, [idUsuario], (err, result) => {
+        if (!err) {
+            if (result.affectedRows > 0) {
+                res.json({ status: 'Usuario eliminado correctamente', id_status: 1 });
+            } else {
+                res.status(404).json({ status: 'Usuario no encontrado', id_status: 0 });
+            }
+        } else {
+            console.error(err);
+            res.status(500).json({ status: 'Error al eliminar el Usuario', id_status: 0 });
+        }
+    });
+});
+
+
 
 // Ruta para iniciar sesión
 router.post('/signin', (req, res) => {
